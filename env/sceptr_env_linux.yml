@@ -1,0 +1,48 @@
+# sceptr_env (Linux x86_64, NVIDIA GPU): SCEPTR TCR embeddings + FAISS (GPU) k-means + the project pipeline.
+# Python 3.10.  Create:  mamba env create -f env/sceptr_env_linux.yml
+#
+# * The graph + Leiden clustering was removed, so python-igraph and leidenalg are no longer listed here
+#   (pynndescent still arrives as a dependency of umap-learn). Versions match the macOS environment (env/sceptr_env_mac.yml); the three GPU packages differ:
+#   pytorch (cuda build), faiss-gpu-cu12 (PyPI wheel), xgboost (cuda build). The conda-forge faiss-gpu is NOT
+#   used: its CUDA 12 build has no kernels for the V100 (compute capability 7.0, CUDA error 209), the PyPI
+#   wheel works there (confirmed by the user on the server, 2026-10-14). The rest was solved as a dry run
+#   for linux-64 on the Mac (pytorch 2.13.0, xgboost 3.2.0) before that change; the file as edited here was
+#   NOT re-solved or installed.
+# * CUDA builds need a NVIDIA driver that supports CUDA 12 (check `nvidia-smi` first). conda refuses CUDA
+#   packages when it cannot see a driver (e.g. on a login node without a GPU); then create the env with
+#       CONDA_OVERRIDE_CUDA=12.9 mamba env create -f env/sceptr_env_linux.yml
+# * The CUDA libraries (cuBLAS, cuDNN, NCCL) come from conda-forge, so no system CUDA toolkit is needed.
+# * sceptr, libtcrlm, tidytcells, blosum and faiss-gpu-cu12 come from PyPI (pip section at the end).
+#   The faiss wheel brings its own CUDA 12 libraries; if pip reports a conflict with the conda CUDA packages
+#   (`pip check`), tell the maintainer.
+name: sceptr_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10.22
+  - pip
+  - numpy=2.2.6
+  - pandas=2.3.3
+  - scipy=1.15.2
+  - scikit-learn=1.7.2
+  - h5py=3.16.0
+  - numba=0.67.0
+  - optuna=5.0.0
+  - shap=0.48.0
+  - matplotlib=3.10.9
+  - tqdm=4.70.0
+  - joblib=1.6.0
+  - umap-learn=0.5.12
+  - ipykernel=7.3.0
+  - nbconvert=7.17.1
+  - nbformat=5.11.1
+  - jupyterlab=4.6.3
+  - cuda-version=12.9
+  - pytorch=2.13.0=cuda*
+  - xgboost=3.2.0=cuda*
+  - pip:
+      - blosum==2.2.0
+      - faiss-gpu-cu12   # PIN IT: run `pip show faiss-gpu-cu12` in the working server env and write ==<version>
+      - libtcrlm==1.1.3
+      - sceptr==1.2.0
+      - tidytcells==2.2.1
